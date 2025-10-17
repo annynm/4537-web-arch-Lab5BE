@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patient Database Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f7f9fb;
+      color: #333;
+    }
+
+    h1 {
+      color: #2b6cb0;
+    }
+
+    #output {
+      margin-top: 20px;
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background-color: #edf2f7;
+    }
+
+    button {
+      background: #2b6cb0;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1a4f8b;
+    }
+
+    #status {
+      margin-top: 10px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Patient Database Viewer</h1>
+  <p>Click the button below to fetch all patients from the database.</p>
+
+  <button id="fetchBtn">Fetch Patients</button>
+  <div id="status"></div>
+  <div id="output"></div>
+
+  <script>
+    const API_URL =
+      "http://localhost:3000/api/v1/sql?query=SELECT%20*%20FROM%20patient";
+
+    document
+      .getElementById("fetchBtn")
+      .addEventListener("click", async () => {
+        const output = document.getElementById("output");
+        const status = document.getElementById("status");
+        output.innerHTML = "";
+        status.textContent = "Fetching data...";
+
+        try {
+          const res = await fetch(API_URL);
+          const data = await res.json();
+
+          if (res.ok && data.data && data.data.length > 0) {
+            status.textContent = `✅ Success: ${data.data.length} record(s) found.`;
+
+            // Build table dynamically
+            const table = document.createElement("table");
+            const headers = Object.keys(data.data[0]);
+            const thead = document.createElement("thead");
+            const headerRow = document.createElement("tr");
+            headers.forEach((h) => {
+              const th = document.createElement("th");
+              th.textContent = h;
+              headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement("tbody");
+            data.data.forEach((row) => {
+              const tr = document.createElement("tr");
+              headers.forEach((h) => {
+                const td = document.createElement("td");
+                td.textContent = row[h];
+                tr.appendChild(td);
+              });
+              tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            output.appendChild(table);
+          } else {
+            status.textContent = "⚠️ No data found or query failed.";
+            output.textContent = JSON.stringify(data, null, 2);
+          }
+        } catch (err) {
+          status.textContent = "❌ Error fetching data.";
+          output.textContent = err.message;
+        }
+      });
+  </script>
+</body>
+
+</html>
