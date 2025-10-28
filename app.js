@@ -71,6 +71,26 @@ const runSecurityTests = async () => {
   console.log("🔒 Security tests completed!\n");
 };
 
+const ensurePatientTableOnURL2 = async () => {
+  const sql2 = neon(process.env.DATABASE_URL2);
+  const result = await sql2(`
+    SELECT EXISTS (
+      SELECT FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = 'patient'
+    );
+  `);
+  if (!result[0].exists) {
+    await sql2(`
+      CREATE TABLE patient (
+        patient_id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        dateofbirth TIMESTAMP NOT NULL
+      );
+    `);
+  }
+};
+
 const requestHandler = async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const path = url.pathname;
@@ -93,6 +113,9 @@ const requestHandler = async (req, res) => {
   // API endpoint
   if (path === "/api/v1/sql" || path === "/lab5/api/v1/sql") {
     try {
+      // ✅ Always run the check against DATABASE_URL2 before handling the query
+      await ensurePatientTableOnURL2();
+
       if (req.method === "GET") {
         // Get query from URL parameter
         const query = url.searchParams.get("query");
@@ -107,7 +130,7 @@ const requestHandler = async (req, res) => {
 
         console.log("Executing:", query);
 
-        // Execute the raw SQL query directly
+        // Execute the raw SQL query directly on DATABASE_URL (original)
         const result = await sql(query);
 
         res.writeHead(200, {
@@ -138,6 +161,7 @@ const requestHandler = async (req, res) => {
             }
 
             console.log("Executing:", query);
+            // Execute on DATABASE_URL (original)
             const result = await sql(query);
 
             res.writeHead(200, {
