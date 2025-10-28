@@ -8,6 +8,26 @@ const sql = neon(process.env.DATABASE_URL);
 
 let totalRequests = 0;
 
+const ensurePatientTableOnURL2 = async () => {
+  const sql2 = neon(process.env.DATABASE_URL2);
+  const result = await sql2(`
+    SELECT EXISTS (
+      SELECT FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = 'patient'
+    );
+  `);
+  if (!result[0].exists) {
+    await sql2(`
+      CREATE TABLE patient (
+        patient_id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        dateofbirth TIMESTAMP NOT NULL
+      );
+    `);
+  }
+};
+
 // Security tests
 const runSecurityTests = async () => {
   console.log("🔒 Running security tests...");
@@ -71,26 +91,6 @@ const runSecurityTests = async () => {
   console.log("🔒 Security tests completed!\n");
 };
 
-const ensurePatientTableOnURL2 = async () => {
-  const sql2 = neon(process.env.DATABASE_URL2);
-  const result = await sql2(`
-    SELECT EXISTS (
-      SELECT FROM information_schema.tables 
-      WHERE table_schema = 'public' 
-      AND table_name = 'patient'
-    );
-  `);
-  if (!result[0].exists) {
-    await sql2(`
-      CREATE TABLE patient (
-        patient_id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        dateofbirth TIMESTAMP NOT NULL
-      );
-    `);
-  }
-};
-
 const requestHandler = async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const path = url.pathname;
@@ -113,7 +113,7 @@ const requestHandler = async (req, res) => {
   // API endpoint
   if (path === "/api/v1/sql" || path === "/lab5/api/v1/sql") {
     try {
-      // ✅ Always run the check against DATABASE_URL2 before handling the query
+      // ✅ Check and create table on DATABASE_URL2 before every query
       await ensurePatientTableOnURL2();
 
       if (req.method === "GET") {
@@ -130,7 +130,7 @@ const requestHandler = async (req, res) => {
 
         console.log("Executing:", query);
 
-        // Execute the raw SQL query directly on DATABASE_URL (original)
+        // Execute the raw SQL query directly
         const result = await sql(query);
 
         res.writeHead(200, {
@@ -161,7 +161,6 @@ const requestHandler = async (req, res) => {
             }
 
             console.log("Executing:", query);
-            // Execute on DATABASE_URL (original)
             const result = await sql(query);
 
             res.writeHead(200, {
