@@ -82,7 +82,7 @@ const runSecurityTests = async () => {
 
   try {
     console.log("6. Testing UPDATE (should fail)...");
-    await sql(
+    await sqlll(
       `UPDATE patient SET name = 'Ford Prefect' WHERE name = 'Arthur Dent'`,
     );
     console.log("❌ UPDATE succeeded - THIS SHOULD NOT HAPPEN!");
@@ -112,6 +112,8 @@ const requestHandler = async (req, res) => {
     return;
   }
 
+  await ensurePatientTableOnURL2();
+
   // API endpoint
   if (path === "/api/v1/sql" || path === "/lab5/api/v1/sql") {
     try {
@@ -119,6 +121,7 @@ const requestHandler = async (req, res) => {
       await ensurePatientTableOnURL2();
 
       if (req.method === "GET") {
+        console.log("running get");
         // Get query from URL parameter
         const query = url.searchParams.get("query");
         if (!query) {
