@@ -27,7 +27,7 @@ const ensurePatientTableOnURL2 = async () => {
       );
     `;
   }
-  consol.log("try was run");
+  console.log("try was run");
 };
 
 // Security tests
