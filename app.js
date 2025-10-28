@@ -10,21 +10,21 @@ let totalRequests = 0;
 
 const ensurePatientTableOnURL2 = async () => {
   const sql2 = neon(process.env.DATABASE_URL2);
-  const result = await sql2(`
-    SELECT EXISTS (
-      SELECT FROM information_schema.tables 
-      WHERE table_schema = 'public' 
-      AND table_name = 'patient'
-    );
-  `);
-  if (!result[0].exists) {
-    await sql2(`
+
+  try {
+    // Try to select from the patient table
+    await sql2`SELECT * FROM patient LIMIT 0`;
+    // If successful, table exists and is accessible
+  } catch (error) {
+    // If it fails (e.g., table doesn't exist), create the table
+    // Optionally check error code for "undefined_table" (42P01) for precision
+    await sql2`
       CREATE TABLE patient (
         patient_id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
-        dateofbirth TIMESTAMP NOT NULL
+        dateofbirth DATE NOT NULL
       );
-    `);
+    `;
   }
 };
 
