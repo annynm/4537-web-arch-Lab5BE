@@ -13,20 +13,21 @@ const ensurePatientTableOnURL2 = async () => {
 
   try {
     // Try to select from the patient table
-    await sql2`SELECT * FROM patient LIMIT 0`;
+    await sql2`SELECT * FROM patients LIMIT 0`;
     // If successful, table exists and is accessible
   } catch (error) {
     // If it fails (e.g., table doesn't exist), create the table
     // Optionally check error code for "undefined_table" (42P01) for precision
     console.log(error);
     await sql2`
-      CREATE TABLE patient (
+      CREATE TABLE patients (
         patient_id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         dateofbirth DATE NOT NULL
       );
     `;
   }
+  await sql2`SELECT * FROM patient LIMIT 0`;
   console.log("try was run");
 };
 
