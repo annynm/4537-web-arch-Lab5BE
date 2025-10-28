@@ -18,6 +18,7 @@ const ensurePatientTableOnURL2 = async () => {
   } catch (error) {
     // If it fails (e.g., table doesn't exist), create the table
     // Optionally check error code for "undefined_table" (42P01) for precision
+    console.log(error);
     await sql2`
       CREATE TABLE patient (
         patient_id SERIAL PRIMARY KEY,
@@ -26,6 +27,7 @@ const ensurePatientTableOnURL2 = async () => {
       );
     `;
   }
+  consol.log("try was run");
 };
 
 // Security tests
